@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Demo Timer</title>
+
+<!-- Rubik font -->
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;800&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Rubik', sans-serif;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #444;
+
+    background: #f5f5f5 url('background.png') repeat-x center;
+    background-size: auto 100%;
+
+    animation: moveBg 600s linear infinite;
+}
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .title {
+        font-size: 50px;
+        margin-bottom: 30px;
+    }
+
+    .timer {
+        font-size: 140px;
+        font-weight: 600;
+        color: #5A5DE6;
+        margin: 20px 0;
+        letter-spacing: 2px;
+    }
+
+    .time {
+        font-size: 50px;
+        margin-top: 20px;
+    }
+
+    /* Logo */
+    .logo {
+        position: absolute;
+        bottom: 40px;
+        left: 40px;
+        width: 250px;
+        opacity: 1;
+    }
+
+    /* Subtiele animatie */
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+@keyframes moveBg {
+    0% {
+        background-position: 0px 50%;
+    }
+    100% {
+        background-position: -10334px 50%; /* EXACT je image breedte */
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="title">De volgende demo start over:</div>
+    <div class="timer" id="timer">-- MINUTEN</div>
+    <div class="time" id="nextDemo">om --:00</div>
+</div>
+
+<img src="logo.png" class="logo">
+  
+<audio id="ding" src="ding.mp3" preload="auto"></audio>
+
+<script>
+let lastPlayedHour = null;
+
+function updateTimer() {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentSecond = now.getSeconds();
+
+    let title = document.querySelector(".title");
+    let timer = document.getElementById("timer");
+    let nextDemo = document.getElementById("nextDemo");
+
+    let nextDemoTime = new Date();
+
+    // 🔔 GELUID exact op het uur (1x)
+    if (
+        currentMinute === 0 &&
+        currentSecond === 0 &&
+        currentHour >= 8 &&
+        currentHour < 19 &&
+        lastPlayedHour !== currentHour
+    ) {
+        document.getElementById("ding").play();
+        lastPlayedHour = currentHour;
+    }
+
+    // 👉 NA 19:00
+    if (currentHour > 19 || (currentHour === 19 && currentMinute >= 30)) {
+        title.innerText = "";
+        nextDemo.innerText = "";
+        timer.innerHTML = "<div>DEMO'S</div><div>AFGELOPEN</div>";
+        return;
+    }
+
+    // 👉 DEMO BEZIG (xx:00 - xx:15)
+    if (currentMinute < 15 && currentHour >= 8 && currentHour < 19) {
+        title.innerText = "";
+        timer.innerText = "DEMO BEZIG";
+
+        nextDemoTime.setHours(currentHour + 1, 0, 0, 0);
+        nextDemo.innerText =
+            "Volgende demo om " +
+            nextDemoTime.getHours().toString().padStart(2, '0') +
+            ":00";
+        return;
+    }
+
+    // 👉 VOOR 08:00 → eerste demo
+    if (currentHour < 8) {
+        title.innerText = "De eerste demo start over:";
+        nextDemoTime.setHours(8, 0, 0, 0);
+    } 
+    // 👉 TUSSEN 08:00 en 19:00 → normale countdown
+    else {
+        nextDemoTime.setHours(currentHour + 1, 0, 0, 0);
+
+        if (currentHour === 18) {
+            title.innerText = "De laatste demo start over:";
+        } else {
+            title.innerText = "De volgende demo start over:";
+        }
+    }
+
+    // ⏱️ Correcte countdown in minuten
+    let diff = Math.ceil((nextDemoTime - now) / 1000); // in seconden
+    let mins = Math.ceil(diff / 60); // afronden naar boven zodat 12:52 = 8 MINUTEN
+
+    if (mins === 1) {
+        timer.innerText = "1 MINUUT";
+    } else {
+        timer.innerText = mins + " MINUTEN";
+    }
+
+    nextDemo.innerText =
+        "om " +
+        nextDemoTime.getHours().toString().padStart(2, '0') +
+        ":00";
+}
+
+setInterval(updateTimer, 1000);
+updateTimer();
+</script>
+
+</body>
+</html>
